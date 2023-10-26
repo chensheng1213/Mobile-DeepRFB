@@ -8,7 +8,7 @@ def _make_divisible(v, divisor, min_value=None):
     if min_value is None:
         min_value = divisor
     new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
-    # Make sure that round down does not go down by more than 10%.
+
     if new_v < 0.9 * v:
         new_v += divisor
     return new_v
@@ -74,34 +74,33 @@ class InvertedResidual(nn.Module):
 
         if inp == hidden_dim:
             self.conv = nn.Sequential(
-                # dw
+
                 nn.Conv2d(hidden_dim, hidden_dim, kernel_size, stride, (kernel_size - 1) // 2, groups=hidden_dim, bias=False),
                 nn.BatchNorm2d(hidden_dim),
                 h_swish() if use_hs else nn.ReLU(inplace=True),
-                # Squeeze-and-Excite
+
                 SELayer(hidden_dim) if use_se else nn.Identity(),
-                # pw-linear
+
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
             )
         else:
             self.conv = nn.Sequential(
 
-                # pw
+
                 nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(hidden_dim),
                 h_swish() if use_hs else nn.ReLU(inplace=True),
 
-                # dw
+
                 nn.Conv2d(hidden_dim, hidden_dim, kernel_size, stride, (kernel_size - 1) // 2, groups=hidden_dim, bias=False),
                 nn.BatchNorm2d(hidden_dim),
 
-                # Squeeze-and-Excite
                 SELayer(hidden_dim) if use_se else nn.Identity(),
 
                 h_swish() if use_hs else nn.ReLU(inplace=True),
 
-                # pw-linear
+
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
             )
@@ -115,39 +114,35 @@ class InvertedResidual(nn.Module):
 class MobileNetV3_Large(nn.Module):
     def __init__(self, num_classes=1000, width_mult=1.):
         super(MobileNetV3_Large, self).__init__()
-        # setting of inverted residual blocks
+
         self.cfgs = [
-            #`   k,   t,   c, SE,HS,s
-                # 208,208,16 -> 208,208,16
+
                 [3,   1,  16, 0, 0, 1],
 
-                # 208,208,16 -> 104,104,24
                 [3,   4,  24, 0, 0, 2],
                 [3,   3,  24, 0, 0, 1],
 
-                # 104,104,24 -> 52,52,40
+
                 [5,   3,  40, 1, 0, 2],
                 [5,   3,  40, 1, 0, 1],
                 [5,   3,  40, 1, 0, 1],
 
-                # 52,52,40 -> 26,26,80
+
                 [3,   6,  80, 0, 1, 2],
                 [3, 2.5,  80, 0, 1, 1],
                 [3, 2.3,  80, 0, 1, 1],
                 [3, 2.3,  80, 0, 1, 1],
 
-                # 26,26,80 -> 26,26,112
                 [3,   6, 112, 1, 1, 1],
                 [3,   6, 112, 1, 1, 1],
 
-                # 26,26,112 -> 13,13,160
                 [5,   6, 160, 1, 1, 2],
                 [5,   6, 160, 1, 1, 1],
                 [5,   6, 160, 1, 1, 1]
         ]
 
         input_channel = _make_divisible(16 * width_mult, 8)
-        # 416,416,3 -> 208,208,16
+
         layers = [conv_3x3_bn(3, input_channel, 2)]
 
         block = InvertedResidual
@@ -196,33 +191,31 @@ class MobileNetV3_Large(nn.Module):
 class MobileNetV3_Small(nn.Module):
     def __init__(self, num_classes=1000, width_mult=1.):
         super(MobileNetV3_Small, self).__init__()
-        # setting of inverted residual blocks
+
         self.cfgs = [
-            #`   k,   t,   c, SE,HS,s
-                # 112,112,16 -> 56,56,16
+
                 [3,   1,  16, 1, 0, 2],
 
-                # 56,56,16 -> 28,28,24
+
                 [3,   3,  24, 0, 0, 2],
                 [3,   4,  24, 0, 0, 1],
 
-                # 28,28,24 -> 14,14,40
+
                 [5,   6,  40, 1, 1, 2],
                 [5,   6,  40, 1, 1, 1],
                 [5,   6,  40, 1, 1, 1],
 
-                # 14,14,40 -> 14,14,48
                 [5, 2.5,  48, 1, 1, 1],
                 [5,   3,  48, 1, 1, 1],
 
-                # 14,14,48 -> 7,7,96
+
                 [5,   3, 96, 1, 1, 2],
                 [5,   6, 96, 1, 1, 1],
                 [5,   6, 96, 1, 1, 1],
         ]
 
         input_channel = _make_divisible(16 * width_mult, 8)
-        # 224,224,3 -> 112,112,16
+
         layers = [conv_3x3_bn(3, input_channel, 2)]
 
         block = InvertedResidual
@@ -291,7 +284,3 @@ def mobilenetv3_large(pretrained=False, **kwargs):
         state_dict = torch.load('./model_data/mobilenet_v3_large-5c1a4163.pth')
         model.load_state_dict(state_dict, strict=True)
     return model
-
-# from torchstat import stat
-# model = mobilenetv3_large()
-# stat(model, (3, 512, 512))

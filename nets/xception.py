@@ -98,7 +98,7 @@ class Xception(nn.Module):
         
         self.conv2 = nn.Conv2d(32,64,3,1,1,bias=False)
         self.bn2 = nn.BatchNorm2d(64, momentum=bn_mom)
-        #do relu here
+
 
         self.block1=Block(64,128,2)
         self.block2=Block(128,256,stride_list[0],inplace=False)
@@ -133,7 +133,7 @@ class Xception(nn.Module):
         self.conv5 = SeparableConv2d(1536,2048,3,1,1*rate,dilation=rate,activate_first=False)
         self.layers = []
 
-        #------- init weights --------
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -141,7 +141,7 @@ class Xception(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-        #-----------------------------
+
 
     def forward(self, input):
         self.layers = []
@@ -197,6 +197,3 @@ def xception(pretrained=True, downsample_factor=16):
         model.load_state_dict(load_url('https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth'), strict=False)
     return model
 
-# from torchstat import stat
-# model = xception()
-# stat(model, (3, 512, 512))
