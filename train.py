@@ -17,24 +17,27 @@ from utils.dataloader import DeeplabDataset, deeplab_dataset_collate
 from utils.utils import download_weights, show_config
 from utils.utils_fit import fit_one_epoch
 
-# 定义一个可以设置随机种子的函数
+
 def setup_seed(seed):
      torch.manual_seed(seed)
      torch.cuda.manual_seed_all(seed)
      np.random.seed(seed)
      random.seed(seed)
      torch.backends.cudnn.deterministic = True
+ 
 
 if __name__ == "__main__":
     setup_seed(42)
+
     Cuda            = True
     distributed     = False
     sync_bn         = False
     fp16            = True
     num_classes     = 5
+
     backbone        = "mobilenetv3_small"
     pretrained      = False
-    model_path      = "model_data/deeplab_mobilenetv2.pth"
+    model_path      = ""
     downsample_factor   = 16
     input_shape         = [512, 512]
     Init_Epoch          = 0
@@ -53,11 +56,13 @@ if __name__ == "__main__":
     save_dir            = 'test_logs'
     eval_flag           = True
     eval_period         = 5
-    VOCdevkit_path = 'VOCdevkit'
+    VOCdevkit_path  = '/root/autodl-tmp/deeplabv3-plus-pytorch/VOCdevkit'
     dice_loss       = True
     focal_loss      = True
     cls_weights     = np.ones([num_classes], np.float32)
     num_workers         =12
+
+
     ngpus_per_node  = torch.cuda.device_count()
     if distributed:
         dist.init_process_group(backend="nccl")
@@ -70,6 +75,7 @@ if __name__ == "__main__":
     else:
         device          = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         local_rank      = 0
+
     if pretrained:
         if distributed:
             if local_rank == 0:
@@ -96,16 +102,20 @@ if __name__ == "__main__":
                 no_load_key.append(k)
         model_dict.update(temp_dict)
         model.load_state_dict(model_dict)
+
         if local_rank == 0:
             print("\nSuccessful Load Key:", str(load_key)[:500], "……\nSuccessful Load Key Num:", len(load_key))
             print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
             print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
+
+
     if local_rank == 0:
         time_str        = datetime.datetime.strftime(datetime.datetime.now(),'%Y_%m_%d_%H_%M_%S')
         log_dir         = os.path.join(save_dir, "loss_" + str(time_str))
         loss_history    = LossHistory(log_dir, model, input_shape=input_shape)
     else:
         loss_history    = None
+
     if fp16:
         from torch.cuda.amp import GradScaler as GradScaler
         scaler = GradScaler()
@@ -113,6 +123,7 @@ if __name__ == "__main__":
         scaler = None
 
     model_train     = model.train()
+
     if sync_bn and ngpus_per_node > 1 and distributed:
         model_train = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model_train)
     elif sync_bn:
@@ -120,7 +131,7 @@ if __name__ == "__main__":
 
     if Cuda:
         if distributed:
-           
+
             model_train = model_train.cuda(local_rank)
             model_train = torch.nn.parallel.DistributedDataParallel(model_train, device_ids=[local_rank], find_unused_parameters=True)
         else:
@@ -142,6 +153,7 @@ if __name__ == "__main__":
             Init_lr = Init_lr, Min_lr = Min_lr, optimizer_type = optimizer_type, momentum = momentum, lr_decay_type = lr_decay_type, \
             save_period = save_period, save_dir = save_dir, num_workers = num_workers, num_train = num_train, num_val = num_val
         )
+
         wanted_step = 1.5e4 if optimizer_type == "sgd" else 0.5e4
         total_step  = num_train // Unfreeze_batch_size * UnFreeze_Epoch
         if total_step <= wanted_step:
@@ -151,6 +163,7 @@ if __name__ == "__main__":
             print("\n\033[1;33;44m[Warning] 使用%s优化器时，建议将训练总步长设置到%d以上。\033[0m"%(optimizer_type, wanted_step))
             print("\033[1;33;44m[Warning] 本次运行的总训练数据量为%d，Unfreeze_batch_size为%d，共训练%d个Epoch，计算出总训练步长为%d。\033[0m"%(num_train, Unfreeze_batch_size, UnFreeze_Epoch, total_step))
             print("\033[1;33;44m[Warning] 由于总训练步长为%d，小于建议总步长%d，建议设置总世代为%d。\033[0m"%(total_step, wanted_step, wanted_epoch))
+        
 
     if True:
         UnFreeze_flag = False
@@ -158,6 +171,7 @@ if __name__ == "__main__":
         if Freeze_Train:
             for param in model.backbone.parameters():
                 param.requires_grad = False
+
 
         batch_size = Freeze_batch_size if Freeze_Train else Unfreeze_batch_size
 
@@ -170,13 +184,13 @@ if __name__ == "__main__":
         Init_lr_fit     = min(max(batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
         Min_lr_fit      = min(max(batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
 
+
         optimizer = {
             'adam'  : optim.Adam(model.parameters(), Init_lr_fit, betas = (momentum, 0.999), weight_decay = weight_decay),
             'sgd'   : optim.SGD(model.parameters(), Init_lr_fit, momentum = momentum, nesterov=True, weight_decay = weight_decay)
         }[optimizer_type]
 
         lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, UnFreeze_Epoch)
-
         epoch_step      = num_train // batch_size
         epoch_step_val  = num_val // batch_size
         
@@ -211,7 +225,6 @@ if __name__ == "__main__":
 
             if epoch >= Freeze_Epoch and not UnFreeze_flag and Freeze_Train:
                 batch_size = Unfreeze_batch_size
-
                 nbs             = 16
                 lr_limit_max    = 5e-4 if optimizer_type == 'adam' else 1e-1
                 lr_limit_min    = 3e-4 if optimizer_type == 'adam' else 5e-4

@@ -7,9 +7,13 @@ from deeplab import DeeplabV3
 from utils.utils_metrics import compute_mIoU, show_results
 
 if __name__ == "__main__":
+
     miou_mode       = 0
+
     num_classes     = 5
+
     name_classes    = ["soil", "bedrock", "sand", "big rock", "background"]
+
     VOCdevkit_path  = 'VOCdevkit'
 
     image_ids       = open(os.path.join(VOCdevkit_path, "VOC/ImageSets/Segmentation/val.txt"),'r').read().splitlines()
