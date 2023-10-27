@@ -319,7 +319,3 @@ class DeepLab(nn.Module):
 
         x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=True)
         return x
-
-
-
-
