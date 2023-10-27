@@ -55,7 +55,6 @@ class CA_Att(nn.Module):
 
         return y
 
-
 class SpatialAttention2d(nn.Module):
     def __init__(self,channel):
         super(SpatialAttention2d, self).__init__()
@@ -66,7 +65,6 @@ class SpatialAttention2d(nn.Module):
         z = self.squeeze(x)
         z = self.sigmoid(z)
         return x * z
-
 
 class GAB(nn.Module):
     def __init__(self,input_dim, reduction=4):
@@ -83,7 +81,6 @@ class GAB(nn.Module):
         z = self.sigmoid(self.conv2(z))
         return x * z
 
-
 class SCse(nn.Module):
     def __init__(self, dim):
         super(SCse, self).__init__()
@@ -92,7 +89,6 @@ class SCse(nn.Module):
 
     def forward(self, x):
         return self.satt(x) + self.catt(x)
-
 
 class ChannelAttention(nn.Module):
     def __init__(self, in_planes, ratio=16):
@@ -142,7 +138,6 @@ class CBAM(nn.Module):
         out = self.spatial_attention(out) * out
         return out
 
-
 class GAM_Att(nn.Module):
     def __init__(self, in_channels, out_channels, rate=4):
         super(GAM_Att, self).__init__()
@@ -172,7 +167,6 @@ class GAM_Att(nn.Module):
         out = x * x_spatial_att
         return out
 
-
 class SE(nn.Module):
     def __init__(self, channel, reduction=16):
         super(SE, self).__init__()
@@ -190,9 +184,7 @@ class SE(nn.Module):
         y =self.fc(y).view(b, c, 1, 1)
         return x * y.expand_as(x)
 
-
 def INF(B, H, W):
-
     return -torch.diag(torch.tensor(float("inf")).repeat(H), 0).unsqueeze(0).repeat(B*W, 1, 1)
 
 class CriCro(nn.Module):
@@ -234,7 +226,6 @@ class CriCro(nn.Module):
 
         return self.gamma * (out_H + out_W) + x
 
-
 class Channel_Attention(nn.Module):
     def __init__(self, channels, t=16):
         super(Channel_Attention, self).__init__()
@@ -260,7 +251,6 @@ class NAM(nn.Module):
         x_out = self.Channel_Attention(x)
         return x_out
 
-
 class ECA(nn.Module):
 
     def __init__(self, channels, kernel_size=3):
@@ -276,28 +266,3 @@ class ECA(nn.Module):
         y = self.sigmoid(y) # multi-scale information fusion
 
         return  x * y.expand_as(x)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
