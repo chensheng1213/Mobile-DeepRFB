@@ -46,7 +46,6 @@ class Block(nn.Module):
             self.head_relu = False
         else:
             self.skip=None
-        
         self.hook_layer = None
         if grow_first:
             filters = out_filters
@@ -57,7 +56,6 @@ class Block(nn.Module):
         self.sepconv3 = SeparableConv2d(out_filters,out_filters,3,stride=strides,padding=1*atrous[2],dilation=atrous[2],bias=False,activate_first=activate_first,inplace=inplace)
 
     def forward(self,inp):
-        
         if self.skip is not None:
             skip = self.skip(inp)
             skip = self.skipbn(skip)
@@ -68,23 +66,13 @@ class Block(nn.Module):
         x = self.sepconv2(x)
         self.hook_layer = x
         x = self.sepconv3(x)
-
         x+=skip
+        
         return x
 
-
 class Xception(nn.Module):
-    """
-    Xception optimized for the ImageNet dataset, as specified in
-    https://arxiv.org/pdf/1610.02357.pdf
-    """
     def __init__(self, downsample_factor):
-        """ Constructor
-        Args:
-            num_classes: number of classes
-        """
         super(Xception, self).__init__()
-
         stride_list = None
         if downsample_factor == 8:
             stride_list = [2,1,1]
@@ -98,7 +86,6 @@ class Xception(nn.Module):
         
         self.conv2 = nn.Conv2d(32,64,3,1,1,bias=False)
         self.bn2 = nn.BatchNorm2d(64, momentum=bn_mom)
-
 
         self.block1=Block(64,128,2)
         self.block2=Block(128,256,stride_list[0],inplace=False)
@@ -127,12 +114,9 @@ class Xception(nn.Module):
         
         self.block20=Block(728,1024,stride_list[2],atrous=rate,grow_first=False)
         self.conv3 = SeparableConv2d(1024,1536,3,1,1*rate,dilation=rate,activate_first=False)
-
         self.conv4 = SeparableConv2d(1536,1536,3,1,1*rate,dilation=rate,activate_first=False)
-
         self.conv5 = SeparableConv2d(1536,2048,3,1,1*rate,dilation=rate,activate_first=False)
         self.layers = []
-
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -141,7 +125,6 @@ class Xception(nn.Module):
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
-
 
     def forward(self, input):
         self.layers = []
@@ -196,4 +179,3 @@ def xception(pretrained=True, downsample_factor=16):
     if pretrained:
         model.load_state_dict(load_url('https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth'), strict=False)
     return model
-
