@@ -8,7 +8,6 @@ def _make_divisible(v, divisor, min_value=None):
     if min_value is None:
         min_value = divisor
     new_v = max(min_value, int(v + divisor / 2) // divisor * divisor)
-
     if new_v < 0.9 * v:
         new_v += divisor
     return new_v
@@ -21,7 +20,6 @@ class h_sigmoid(nn.Module):
     def forward(self, x):
         return self.relu(x + 3) / 6
 
-
 class h_swish(nn.Module):
     def __init__(self, inplace=True):
         super(h_swish, self).__init__()
@@ -29,7 +27,6 @@ class h_swish(nn.Module):
 
     def forward(self, x):
         return x * self.sigmoid(x)
-
 
 class SELayer(nn.Module):
     def __init__(self, channel, reduction=4):
@@ -48,14 +45,12 @@ class SELayer(nn.Module):
         y = self.fc(y).view(b, c, 1, 1)
         return x * y
 
-
 def conv_3x3_bn(inp, oup, stride):
     return nn.Sequential(
         nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
         nn.BatchNorm2d(oup),
         h_swish()
     )
-
 
 def conv_1x1_bn(inp, oup):
     return nn.Sequential(
@@ -64,43 +59,29 @@ def conv_1x1_bn(inp, oup):
         h_swish()
     )
 
-
 class InvertedResidual(nn.Module):
     def __init__(self, inp, hidden_dim, oup, kernel_size, stride, use_se, use_hs):
         super(InvertedResidual, self).__init__()
         assert stride in [1, 2]
-
         self.identity = stride == 1 and inp == oup
-
         if inp == hidden_dim:
             self.conv = nn.Sequential(
-
                 nn.Conv2d(hidden_dim, hidden_dim, kernel_size, stride, (kernel_size - 1) // 2, groups=hidden_dim, bias=False),
                 nn.BatchNorm2d(hidden_dim),
                 h_swish() if use_hs else nn.ReLU(inplace=True),
-
                 SELayer(hidden_dim) if use_se else nn.Identity(),
-
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
             )
         else:
             self.conv = nn.Sequential(
-
-
                 nn.Conv2d(inp, hidden_dim, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(hidden_dim),
                 h_swish() if use_hs else nn.ReLU(inplace=True),
-
-
                 nn.Conv2d(hidden_dim, hidden_dim, kernel_size, stride, (kernel_size - 1) // 2, groups=hidden_dim, bias=False),
                 nn.BatchNorm2d(hidden_dim),
-
                 SELayer(hidden_dim) if use_se else nn.Identity(),
-
                 h_swish() if use_hs else nn.ReLU(inplace=True),
-
-
                 nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
                 nn.BatchNorm2d(oup),
             )
@@ -114,37 +95,25 @@ class InvertedResidual(nn.Module):
 class MobileNetV3_Large(nn.Module):
     def __init__(self, num_classes=1000, width_mult=1.):
         super(MobileNetV3_Large, self).__init__()
-
         self.cfgs = [
-
                 [3,   1,  16, 0, 0, 1],
-
                 [3,   4,  24, 0, 0, 2],
                 [3,   3,  24, 0, 0, 1],
-
-
                 [5,   3,  40, 1, 0, 2],
                 [5,   3,  40, 1, 0, 1],
                 [5,   3,  40, 1, 0, 1],
-
-
                 [3,   6,  80, 0, 1, 2],
                 [3, 2.5,  80, 0, 1, 1],
                 [3, 2.3,  80, 0, 1, 1],
                 [3, 2.3,  80, 0, 1, 1],
-
                 [3,   6, 112, 1, 1, 1],
                 [3,   6, 112, 1, 1, 1],
-
                 [5,   6, 160, 1, 1, 2],
                 [5,   6, 160, 1, 1, 1],
                 [5,   6, 160, 1, 1, 1]
         ]
-
         input_channel = _make_divisible(16 * width_mult, 8)
-
         layers = [conv_3x3_bn(3, input_channel, 2)]
-
         block = InvertedResidual
         for k, t, c, use_se, use_hs, s in self.cfgs:
             output_channel = _make_divisible(c * width_mult, 8)
@@ -152,7 +121,6 @@ class MobileNetV3_Large(nn.Module):
             layers.append(block(input_channel, exp_size, output_channel, k, s, use_se, use_hs))
             input_channel = output_channel
         self.features = nn.Sequential(*layers)
-
         self.conv = conv_1x1_bn(input_channel, exp_size)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         output_channel = _make_divisible(1280 * width_mult, 8) if width_mult > 1.0 else 1280
@@ -162,7 +130,6 @@ class MobileNetV3_Large(nn.Module):
             nn.Dropout(0.2),
             nn.Linear(output_channel, num_classes),
         )
-
         self._initialize_weights()
 
     def forward(self, x):
@@ -191,33 +158,21 @@ class MobileNetV3_Large(nn.Module):
 class MobileNetV3_Small(nn.Module):
     def __init__(self, num_classes=1000, width_mult=1.):
         super(MobileNetV3_Small, self).__init__()
-
         self.cfgs = [
-
                 [3,   1,  16, 1, 0, 2],
-
-
                 [3,   3,  24, 0, 0, 2],
                 [3,   4,  24, 0, 0, 1],
-
-
                 [5,   6,  40, 1, 1, 2],
                 [5,   6,  40, 1, 1, 1],
                 [5,   6,  40, 1, 1, 1],
-
                 [5, 2.5,  48, 1, 1, 1],
                 [5,   3,  48, 1, 1, 1],
-
-
                 [5,   3, 96, 1, 1, 2],
                 [5,   6, 96, 1, 1, 1],
                 [5,   6, 96, 1, 1, 1],
         ]
-
         input_channel = _make_divisible(16 * width_mult, 8)
-
         layers = [conv_3x3_bn(3, input_channel, 2)]
-
         block = InvertedResidual
         for k, t, c, use_se, use_hs, s in self.cfgs:
             output_channel = _make_divisible(c * width_mult, 8)
@@ -225,7 +180,6 @@ class MobileNetV3_Small(nn.Module):
             layers.append(block(input_channel, exp_size, output_channel, k, s, use_se, use_hs))
             input_channel = output_channel
         self.features = nn.Sequential(*layers)
-
         self.conv = conv_1x1_bn(input_channel, exp_size)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         output_channel = _make_divisible(1024 * width_mult, 8) if width_mult > 1.0 else 1024
@@ -235,7 +189,6 @@ class MobileNetV3_Small(nn.Module):
             nn.Dropout(0.2),
             nn.Linear(output_channel, num_classes),
         )
-
         self._initialize_weights()
 
     def forward(self, x):
