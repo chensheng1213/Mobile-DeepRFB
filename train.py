@@ -17,7 +17,6 @@ from utils.dataloader import DeeplabDataset, deeplab_dataset_collate
 from utils.utils import download_weights, show_config
 from utils.utils_fit import fit_one_epoch
 
-
 def setup_seed(seed):
      torch.manual_seed(seed)
      torch.cuda.manual_seed_all(seed)
@@ -25,16 +24,13 @@ def setup_seed(seed):
      random.seed(seed)
      torch.backends.cudnn.deterministic = True
  
-
 if __name__ == "__main__":
     setup_seed(42)
-
     Cuda            = True
     distributed     = False
     sync_bn         = False
     fp16            = True
     num_classes     = 5
-
     backbone        = "mobilenetv3_small"
     pretrained      = False
     model_path      = ""
@@ -61,7 +57,6 @@ if __name__ == "__main__":
     focal_loss      = True
     cls_weights     = np.ones([num_classes], np.float32)
     num_workers         =12
-
 
     ngpus_per_node  = torch.cuda.device_count()
     if distributed:
@@ -106,8 +101,6 @@ if __name__ == "__main__":
         if local_rank == 0:
             print("\nSuccessful Load Key:", str(load_key)[:500], "……\nSuccessful Load Key Num:", len(load_key))
             print("\nFail To Load Key:", str(no_load_key)[:500], "……\nFail To Load Key num:", len(no_load_key))
-            print("\n\033[1;33;44m温馨提示，head部分没有载入是正常现象，Backbone部分没有载入是错误的。\033[0m")
-
 
     if local_rank == 0:
         time_str        = datetime.datetime.strftime(datetime.datetime.now(),'%Y_%m_%d_%H_%M_%S')
@@ -160,10 +153,7 @@ if __name__ == "__main__":
             if num_train // Unfreeze_batch_size == 0:
                 raise ValueError('数据集过小，无法进行训练，请扩充数据集。')
             wanted_epoch = wanted_step // (num_train // Unfreeze_batch_size) + 1
-            print("\n\033[1;33;44m[Warning] 使用%s优化器时，建议将训练总步长设置到%d以上。\033[0m"%(optimizer_type, wanted_step))
             print("\033[1;33;44m[Warning] 本次运行的总训练数据量为%d，Unfreeze_batch_size为%d，共训练%d个Epoch，计算出总训练步长为%d。\033[0m"%(num_train, Unfreeze_batch_size, UnFreeze_Epoch, total_step))
-            print("\033[1;33;44m[Warning] 由于总训练步长为%d，小于建议总步长%d，建议设置总世代为%d。\033[0m"%(total_step, wanted_step, wanted_epoch))
-        
 
     if True:
         UnFreeze_flag = False
@@ -172,9 +162,7 @@ if __name__ == "__main__":
             for param in model.backbone.parameters():
                 param.requires_grad = False
 
-
         batch_size = Freeze_batch_size if Freeze_Train else Unfreeze_batch_size
-
         nbs             = 16
         lr_limit_max    = 5e-4 if optimizer_type == 'adam' else 1e-1
         lr_limit_min    = 3e-4 if optimizer_type == 'adam' else 5e-4
@@ -183,7 +171,6 @@ if __name__ == "__main__":
             lr_limit_min    = 1e-4 if optimizer_type == 'adam' else 5e-4
         Init_lr_fit     = min(max(batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
         Min_lr_fit      = min(max(batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
-
 
         optimizer = {
             'adam'  : optim.Adam(model.parameters(), Init_lr_fit, betas = (momentum, 0.999), weight_decay = weight_decay),
@@ -222,7 +209,6 @@ if __name__ == "__main__":
             eval_callback   = None
 
         for epoch in range(Init_Epoch, UnFreeze_Epoch):
-
             if epoch >= Freeze_Epoch and not UnFreeze_flag and Freeze_Train:
                 batch_size = Unfreeze_batch_size
                 nbs             = 16
@@ -237,8 +223,7 @@ if __name__ == "__main__":
                 lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, UnFreeze_Epoch)
                     
                 for param in model.backbone.parameters():
-                    param.requires_grad = True
-                            
+                    param.requires_grad = True         
                 epoch_step      = num_train // batch_size
                 epoch_step_val  = num_val // batch_size
 
@@ -252,14 +237,12 @@ if __name__ == "__main__":
                                             drop_last = True, collate_fn = deeplab_dataset_collate, sampler=train_sampler)
                 gen_val         = DataLoader(val_dataset  , shuffle = shuffle, batch_size = batch_size, num_workers = num_workers, pin_memory=True, 
                                             drop_last = True, collate_fn = deeplab_dataset_collate, sampler=val_sampler)
-
                 UnFreeze_flag = True
 
             if distributed:
                 train_sampler.set_epoch(epoch)
 
             set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
-
             fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, epoch, 
                     epoch_step, epoch_step_val, gen, gen_val, UnFreeze_Epoch, Cuda, dice_loss, focal_loss, cls_weights, num_classes, fp16, scaler, save_period, save_dir, local_rank)
 
