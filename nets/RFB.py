@@ -95,16 +95,3 @@ class RFB(nn.Module):
         out = self.relu(out)
 
         return out
-
-
-
-
-
-
-
-
-
-
-
-
-
