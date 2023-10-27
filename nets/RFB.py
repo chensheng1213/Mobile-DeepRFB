@@ -47,30 +47,33 @@ class RFB(nn.Module):
         self.branch0 = nn.Sequential(
             BasicConv(dim_in, inter_planes, kernel_size=1, stride=1),
             BasicConv(inter_planes, inter_planes, kernel_size=3, stride=1, padding=1, relu=False)
-
+            # BasicSepConv(inter_planes, kernel_size=3, stride=1, padding=1, dilation=1, relu=False)
         )
         self.branch1 = nn.Sequential(
             BasicConv(dim_in, inter_planes, kernel_size=1, stride=1),
             BasicConv(inter_planes, inter_planes, kernel_size=(3, 1), stride=1, padding=(1, 0)),
             BasicConv(inter_planes, inter_planes, kernel_size=3, stride=1, padding=3, dilation=3, relu=False)
-
+            # BasicSepConv(inter_planes, kernel_size=3, stride=1, padding=3, dilation=3,relu=False)
         )
         self.branch2 = nn.Sequential(
             BasicConv(dim_in, inter_planes, kernel_size=1, stride=1),
             BasicConv(inter_planes, inter_planes, kernel_size=(1,3), stride=stride, padding=(0, 1)),
             BasicConv(inter_planes, inter_planes, kernel_size=3, stride=1, padding=3, dilation=3, relu=False)
-
+            # BasicSepConv(inter_planes, kernel_size=3, stride=1, padding=3, dilation=3, relu=False)
         )
         self.branch3 = nn.Sequential(
             BasicConv(dim_in, inter_planes // 2, kernel_size=1, stride=1),
             BasicConv(inter_planes // 2, (inter_planes // 4) * 3, kernel_size=(1, 3), stride=1, padding=(0 ,1)),
             BasicConv((inter_planes // 4) * 3, inter_planes, kernel_size=(3, 1), stride=stride, padding=(1, 0)),
             BasicConv(inter_planes, inter_planes, kernel_size=3, stride=1, padding=5, dilation=5, relu=False)
-
+            # BasicSepConv(inter_planes, kernel_size=3, stride=1, padding=5,dilation=5,relu=False)
         )
 
         self.ConvLinear = BasicConv(4*inter_planes, dim_out, kernel_size=1, stride=1, relu=False)
-
+        # CA_Att(dim_out, dim_out)
+        # self.att= SCse(dim_out)
+        # CBAM(dim_out, dim_out)
+        # GAM_Att(dim_out, dim_out)
         if dim_in == dim_out:
             self.identity = True
         else:
@@ -86,7 +89,7 @@ class RFB(nn.Module):
 
         out = torch.cat((x0, x1, x2, x3), 1)
         out = self.ConvLinear(out)
-
+        # out = self.att(out)
         if self.identity:
             out = out*self.scale + x
         else:
