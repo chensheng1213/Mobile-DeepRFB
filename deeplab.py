@@ -16,7 +16,7 @@ class DeeplabV3(object):
     _defaults = {
         "model_path"        : 'test_pth/mobilenet_RFB_BasicConv_miou_70.12_0att.pth',
         "num_classes"       : 5,
-        "backbone"          : "mobilenet",
+        "backbone"          : "mobilenetv3_large",
         "input_shape"       : [512, 512],
         "downsample_factor" : 16,
         "mix_type"          : 2,
