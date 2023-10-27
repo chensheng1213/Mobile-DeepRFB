@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
         ref, frame = capture.read()
         if not ref:
-            raise ValueError("未能正确读取摄像头（视频），请注意是否正确安装摄像头（是否正确填写视频路径）。")
+            raise ValueError("未能正确读取摄像头（视频）")
 
         fps = 0.0
         while(True):
@@ -53,11 +53,9 @@ if __name__ == "__main__":
             frame = Image.fromarray(np.uint8(frame))
             frame = np.array(deeplab.detect_image(frame))
             frame = cv2.cvtColor(frame,cv2.COLOR_RGB2BGR)
-            
             fps  = ( fps + (1./(time.time()-t1)) ) / 2
             print("fps= %.2f"%(fps))
             frame = cv2.putText(frame, "fps= %.2f"%(fps), (0, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            
             cv2.imshow("video",frame)
             c= cv2.waitKey(1) & 0xff 
             if video_save_path!="":
