@@ -24,7 +24,6 @@ class LossHistory():
         self.log_dir    = log_dir
         self.losses     = []
         self.val_loss   = []
-        
         os.makedirs(self.log_dir)
         self.writer     = SummaryWriter(self.log_dir)
         try:
@@ -36,10 +35,8 @@ class LossHistory():
     def append_loss(self, epoch, loss, val_loss):
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
-
         self.losses.append(loss)
         self.val_loss.append(val_loss)
-
         with open(os.path.join(self.log_dir, "epoch_loss.txt"), 'a') as f:
             f.write(str(loss))
             f.write("\n")
@@ -53,7 +50,6 @@ class LossHistory():
 
     def loss_plot(self):
         iters = range(len(self.losses))
-
         plt.figure()
         plt.plot(iters, self.losses, 'red', linewidth = 2, label='train loss')
         plt.plot(iters, self.val_loss, 'coral', linewidth = 2, label='val loss')
@@ -72,9 +68,7 @@ class LossHistory():
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.legend(loc="upper right")
-
         plt.savefig(os.path.join(self.log_dir, "epoch_loss.png"))
-
         plt.cla()
         plt.close("all")
 
@@ -82,7 +76,6 @@ class EvalCallback():
     def __init__(self, net, input_shape, num_classes, image_ids, dataset_path, log_dir, cuda, \
             miou_out_path=".temp_miou_out", eval_flag=True, period=1):
         super(EvalCallback, self).__init__()
-        
         self.net                = net
         self.input_shape        = input_shape
         self.num_classes        = num_classes
@@ -103,28 +96,21 @@ class EvalCallback():
                 f.write("\n")
 
     def get_miou_png(self, image):
-
         image       = cvtColor(image)
         orininal_h  = np.array(image).shape[0]
         orininal_w  = np.array(image).shape[1]
-
         image_data, nw, nh  = resize_image(image, (self.input_shape[1],self.input_shape[0]))
-
         image_data  = np.expand_dims(np.transpose(preprocess_input(np.array(image_data, np.float32)), (2, 0, 1)), 0)
-
         with torch.no_grad():
             images = torch.from_numpy(image_data)
             if self.cuda:
                 images = images.cuda()
                 
-
             pr = self.net(images)[0]
             pr = F.softmax(pr.permute(1,2,0),dim = -1).cpu().numpy()
             pr = pr[int((self.input_shape[0] - nh) // 2) : int((self.input_shape[0] - nh) // 2 + nh), \
                     int((self.input_shape[1] - nw) // 2) : int((self.input_shape[1] - nw) // 2 + nw)]
-
             pr = cv2.resize(pr, (orininal_w, orininal_h), interpolation = cv2.INTER_LINEAR)
-
             pr = pr.argmax(axis=-1)
     
         image = Image.fromarray(np.uint8(pr))
@@ -141,20 +127,16 @@ class EvalCallback():
                 os.makedirs(pred_dir)
             print("Get miou.")
             for image_id in tqdm(self.image_ids):
-
                 image_path  = os.path.join(self.dataset_path, "VOC/JPEGImages/"+image_id+".jpg")
                 image       = Image.open(image_path)
-
                 image       = self.get_miou_png(image)
                 image.save(os.path.join(pred_dir, image_id + ".png"))
                         
             print("Calculate miou.")
             _, IoUs, _, _ = compute_mIoU(gt_dir, pred_dir, self.image_ids, self.num_classes, None)  # 执行计算mIoU的函数
             temp_miou = np.nanmean(IoUs) * 100
-
             self.mious.append(temp_miou)
             self.epoches.append(epoch)
-
             with open(os.path.join(self.log_dir, "epoch_miou.txt"), 'a') as f:
                 f.write(str(temp_miou))
                 f.write("\n")
