@@ -2,7 +2,6 @@ import numpy as np
 from PIL import Image
 import torch.nn as nn
 
-
 def cvtColor(image):
     if len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
         return image 
@@ -10,19 +9,15 @@ def cvtColor(image):
         image = image.convert('RGB')
         return image 
 
-
 def resize_image(image, size):
     iw, ih  = image.size
     w, h    = size
-
     scale   = min(w/iw, h/ih)
     nw      = int(iw*scale)
     nh      = int(ih*scale)
-
     image   = image.resize((nw,nh), Image.BICUBIC)
     new_image = Image.new('RGB', size, (128,128,128))
     new_image.paste(image, ((w-nw)//2, (h-nh)//2))
-
     return new_image, nw, nh
 
 def get_lr(optimizer):
@@ -48,10 +43,9 @@ def download_weights(backbone, model_dir="./model_data"):
     
     download_urls = {
         'mobilenet' : 'https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/mobilenet_v2.pth.tar',
-        'xception'  : 'https://github.com/bubbliiiing/deeplabv3-plus-pytorch/releases/download/v1.0/xception_pytorch_imagenet.pth',
+        'mobilenetv3': https://github.com/d-li14/mobilenetv3.pytorch.git
     }
     url = download_urls[backbone]
-    
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
     load_state_dict_from_url(url, model_dir)
