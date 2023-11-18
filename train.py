@@ -50,6 +50,8 @@ if __name__ == "__main__":
     lr_decay_type       = 'step'
     save_period         = 5
     save_dir            = 'test_logs'
+    # eval_flag Whether to evaluate during training. 
+    # eval_period indicates how many epochs are evaluated onc
     eval_flag           = True
     eval_period         = 5
     VOCdevkit_path  = '/root/autodl-tmp/deeplabv3-plus-pytorch/VOCdevkit'
@@ -213,6 +215,8 @@ if __name__ == "__main__":
         else:
             eval_callback   = None
 
+
+        # Start model training
         for epoch in range(Init_Epoch, UnFreeze_Epoch):
             if epoch >= Freeze_Epoch and not UnFreeze_flag and Freeze_Train:
                 batch_size = Unfreeze_batch_size
