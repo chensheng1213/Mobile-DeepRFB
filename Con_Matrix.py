@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+#Calculate the confusion matrix of different models
 data = {
     '(a)': np.array([
         [0.81, 0.07, 0.09, 0.02, 0.01],
