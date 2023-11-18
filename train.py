@@ -155,6 +155,11 @@ if __name__ == "__main__":
             wanted_epoch = wanted_step // (num_train // Unfreeze_batch_size) + 1
             print("\033[1;33;44m[Warning] 本次运行的总训练数据量为%d，Unfreeze_batch_size为%d，共训练%d个Epoch，计算出总训练步长为%d。\033[0m"%(num_train, Unfreeze_batch_size, UnFreeze_Epoch, total_step))
 
+    # Backbone feature extraction network features are universal, freezing training can speed up training
+    # Also prevents weights from being destroyed at the beginning of training.
+    # Init_Epoch is the start epoch
+    # Interval_Epoch is the epoch of freeze training
+    # Epoch Total training epoch
     if True:
         UnFreeze_flag = False
 
