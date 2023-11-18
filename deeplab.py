@@ -20,6 +20,10 @@ class DeeplabV3(object):
         "input_shape"       : [512, 512],
         "downsample_factor" : 16,
         "mix_type"          : 2,
+         # The # mix_type parameter controls how test results are visualized
+         # The mix_type = 0 indicates that the original image is mixed with the generated image
+         # mix_type = 1 means that only the generated graph is retained
+         # When mix_type = 2, it means that only the background is deleted and only the object in the original image is retained
         "cuda"              : True,
     }
 
@@ -28,7 +32,8 @@ class DeeplabV3(object):
         self.__dict__.update(self._defaults)
         for name, value in kwargs.items():
             setattr(self, name, value)
-
+        
+        # Set the frame to different colors
         if self.num_classes <= 5:
             self.colors = [(5, 5, 5), (0, 128, 0), (128, 128, 0), (128, 0, 0),(64, 0, 128)]
         else:
@@ -56,6 +61,7 @@ class DeeplabV3(object):
                 self.net = self.net.cuda()
 
     def detect_image(self, image, count=False, name_classes=None):
+        # Here the image is converted to RGB image to prevent the grayscale image from being wrong in the prediction
         image       = cvtColor(image)
         old_img     = copy.deepcopy(image)
         orininal_h  = np.array(image).shape[0]
@@ -80,7 +86,8 @@ class DeeplabV3(object):
             pr = cv2.resize(pr, (orininal_w, orininal_h), interpolation = cv2.INTER_LINEAR)
 
             pr = pr.argmax(axis=-1)
-
+ 
+        # Statistical pixel count
         if count:
             classes_nums        = np.zeros([self.num_classes])
             total_points_num    = orininal_h * orininal_w
@@ -115,7 +122,7 @@ class DeeplabV3(object):
             image = Image.fromarray(np.uint8(seg_img))
         
         return image
-
+# 
     def get_FPS(self, image, test_interval):
         image       = cvtColor(image)
 
