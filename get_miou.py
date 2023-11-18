@@ -7,6 +7,9 @@ from deeplab import DeeplabV3
 from utils.utils_metrics import compute_mIoU, show_results
 
 if __name__ == "__main__":
+    # If miou_mode is 0, it indicates the entire miou calculation process, including obtaining prediction results and calculating miou
+    # If miou_mode is 1, only the prediction result is obtained
+    # If miou_mode is 2, only miou is calculated
     miou_mode       = 0
     num_classes     = 5
     name_classes    = ["soil", "bedrock", "sand", "big rock", "background"]
