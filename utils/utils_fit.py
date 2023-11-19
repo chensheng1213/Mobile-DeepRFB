@@ -30,9 +30,11 @@ def fit_one_epoch(model_train, model, loss_history, eval_callback, optimizer, ep
                 pngs    = pngs.cuda(local_rank)
                 labels  = labels.cuda(local_rank)
                 weights = weights.cuda(local_rank)
-
+              
+        # Clear the gradient
         optimizer.zero_grad()
         if not fp16:
+            # Forward propagation
             outputs = model_train(imgs)
             if focal_loss:
                 loss = Focal_Loss(outputs, pngs, weights, num_classes = num_classes)
