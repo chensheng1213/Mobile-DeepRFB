@@ -105,7 +105,8 @@ class EvalCallback():
             images = torch.from_numpy(image_data)
             if self.cuda:
                 images = images.cuda()
-                
+
+            # Images are fed into the network for prediction
             pr = self.net(images)[0]
             pr = F.softmax(pr.permute(1,2,0),dim = -1).cpu().numpy()
             pr = pr[int((self.input_shape[0] - nh) // 2) : int((self.input_shape[0] - nh) // 2 + nh), \
