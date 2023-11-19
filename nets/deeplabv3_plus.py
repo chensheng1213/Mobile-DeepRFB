@@ -306,13 +306,17 @@ class DeepLab(nn.Module):
 
     def forward(self, x):
         H, W = x.size(2), x.size(3)
-
+        
+	# Get two feature layers
+        # low_level_features: Shallow features - Convolution processing
+        # x: Backbone - Enhanced feature extraction with ASPP structures
         low_level_features, x = self.backbone(x)
         x = self.rfb(x)
 
         low_level_features = self.shortcut_conv(low_level_features)
         
-
+        # Will enhance feature edge sampling
+        # After stacking with shallow features, use convolution to extract features
         x = F.interpolate(x, size=(low_level_features.size(2), low_level_features.size(3)), mode='bilinear', align_corners=True)
         x = self.cat_conv(torch.cat((x, low_level_features), dim=1))
         x = self.cls_conv(x)
