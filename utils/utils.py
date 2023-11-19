@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image
 import torch.nn as nn
 
+# Convert the image to RGB image
 def cvtColor(image):
     if len(np.shape(image)) == 3 and np.shape(image)[2] == 3:
         return image 
@@ -9,6 +10,7 @@ def cvtColor(image):
         image = image.convert('RGB')
         return image 
 
+# resize the input image
 def resize_image(image, size):
     iw, ih  = image.size
     w, h    = size
@@ -25,7 +27,7 @@ def get_lr(optimizer):
         return param_group['lr']
 
 def preprocess_input(image):
-    image /= 255.0
+    image /= 255.0 # Image normalization processing
     return image
 
 def show_config(**kwargs):
